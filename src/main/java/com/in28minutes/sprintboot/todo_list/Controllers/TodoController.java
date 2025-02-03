@@ -1,7 +1,9 @@
 package com.in28minutes.sprintboot.todo_list.Controllers;
 
+import com.in28minutes.sprintboot.todo_list.DataModels.Dto.TodoRequest;
 import com.in28minutes.sprintboot.todo_list.DataModels.Todo;
 import com.in28minutes.sprintboot.todo_list.Service.TodoService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +28,14 @@ public class TodoController {
         return ResponseEntity.status(HttpStatus.OK).body(todoService.getTodosOfUser());
     }
 
+    @GetMapping("/todo/{id}")
+    public ResponseEntity<TodoRequest> getTodoById(@PathVariable Integer id){
+        return ResponseEntity.status(HttpStatus.OK).body(todoService.getTodoById(id));
+    }
+
     @PostMapping("/todo")
-    public ResponseEntity<?> postTodo(@RequestBody Todo newTask){
-        if(todoService.addTodo(newTask))
-            return ResponseEntity.status(HttpStatus.CREATED).body(newTask);
-        return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("unable to enter new task . try again");
+    public ResponseEntity<TodoRequest> postTodo(@RequestBody @Valid TodoRequest request){
+        return ResponseEntity.status(HttpStatus.CREATED).body(todoService.addTodo(request));
     }
 
     @DeleteMapping("/delete-todo/{id}")
@@ -38,7 +43,7 @@ public class TodoController {
         return ResponseEntity.ok().body(todoService.deleteTodo(id));
     }
 
-    @PutMapping("/todo/{id}")
+    @PatchMapping("/todo/{id}")
     public ResponseEntity<Todo> updateTodo(@PathVariable String id, @RequestBody Todo updatedTask){
         return ResponseEntity.ok().body(todoService.updateTodo(id,updatedTask));
     }

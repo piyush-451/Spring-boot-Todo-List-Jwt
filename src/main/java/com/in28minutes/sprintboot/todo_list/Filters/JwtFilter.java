@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -42,8 +43,10 @@ public class JwtFilter extends OncePerRequestFilter {
             if(authorizationHeader==null || !authorizationHeader.startsWith("Bearer ")){
 //                throw new ServletException("No Authorization token");
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No Authorization token or invalid token format");
+//                filterChain.doFilter(request, response);
                 return;  // Do not continue processing, send the error response immediately
             }
+
 
             String token = authorizationHeader.substring(7);
 
@@ -63,7 +66,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         }
         catch (Exception e){
+//            filterChain.doFilter(request, response);
             System.out.println(e.getMessage());
+//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No Authorization token or invalid token format");
+
         }
     }
 

@@ -2,11 +2,18 @@ package com.in28minutes.sprintboot.todo_list.DataModels;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Setter
+@Getter
 @Entity
+@Builder
 @Table(name = "users")  // Map to the 'users' table
 public class User {
     @Id
@@ -16,14 +23,15 @@ public class User {
     @Column(name = "username")  // Map 'username' to the correct column
     private String username;
 
+//    @JsonIgnore
     @Column(name = "password")  // Map 'password' to the correct column
     private String password;
 
     @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
     private Profile profile;
 
-    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Todo> todoList = new ArrayList<>();
+    @OneToMany(mappedBy = "user",cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Todo> todoList;
 
     @ManyToMany(mappedBy = "userList", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<Role> roleList = new ArrayList<>();
@@ -43,54 +51,6 @@ public class User {
         this.profile = profile;
         this.todoList = todoList;
         this.roleList = roleList;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public Profile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(Profile profile) {
-        this.profile = profile;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public List<Todo> getTodoList() {
-        return todoList;
-    }
-
-    public void setTodoList(List<Todo> todoList) {
-        this.todoList = todoList;
-    }
-
-    public List<Role> getRoleList() {
-        return roleList;
-    }
-
-    public void setRoleList(List<Role> roleList) {
-        this.roleList = roleList;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public void setUsernameName(String name) {

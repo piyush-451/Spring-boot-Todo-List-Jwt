@@ -1,17 +1,25 @@
 package com.in28minutes.sprintboot.todo_list.Service;
 
 import com.in28minutes.sprintboot.todo_list.Annotations.ValidateTask;
+import com.in28minutes.sprintboot.todo_list.DataModels.Dto.TodoMapper;
+import com.in28minutes.sprintboot.todo_list.DataModels.Dto.TodoRequest;
 import com.in28minutes.sprintboot.todo_list.DataModels.Todo;
 import com.in28minutes.sprintboot.todo_list.DataModels.User;
+import com.in28minutes.sprintboot.todo_list.Exceptions.Exception.ResourceNotFoundException;
+import com.in28minutes.sprintboot.todo_list.Exceptions.Exception.UnauthorisedActionException;
 import com.in28minutes.sprintboot.todo_list.Repository.TodoRepo;
 import com.in28minutes.sprintboot.todo_list.Repository.UserRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class TodoService {
 
     @Autowired
@@ -23,21 +31,23 @@ public class TodoService {
     @Autowired
     private UserService userService;
 
+    private final TodoMapper todoMapper;
+
 
     public List<Todo> getAllTodo() {
         return todoRepo.findAll();
     }
 
     @ValidateTask
-    public boolean addTodo(Todo newTask){
+    public TodoRequest addTodo(TodoRequest request){
+        Todo newTask = todoMapper.toTodoEntity(request);
         String username = userService.getCurrentUserDetails().getUsername();
         User user = userRepo.findByUsername(username);
-        newTask.setUsername(username);
         newTask.setUser(user);
-        userRepo.save(user);
-        todoRepo.save(newTask);
         user.getTodoList().add(newTask);
-        return true;
+        userRepo.save(user);
+        newTask = todoRepo.save(newTask);
+        return todoMapper.toTodoResponse(newTask);
     }
 
     public List<Todo> getTodosOfUser(){
@@ -46,20 +56,41 @@ public class TodoService {
     }
 
     public Todo deleteTodo(String id) {
-        Todo deletedItem = todoRepo.findById(Integer.parseInt(id)).orElseThrow(() -> new RuntimeException("Item not found"));
+        String username = userService.getCurrentUserDetails().getUsername();
+        Todo deletedItem = todoRepo.getTodoByIdAndUsername(Integer.parseInt(id),username).orElseThrow(() -> new RuntimeException("Item not found"));
         todoRepo.delete(deletedItem);
         return deletedItem;
 
     }
 
     public Todo updateTodo(String id, Todo updatedTask) {
-        Todo newUpdatedTask = todoRepo.findById(Integer.parseInt(id)).orElseThrow(() -> new RuntimeException("Item not found"));
-        newUpdatedTask.setDescription(updatedTask.getDescription());
-        newUpdatedTask.setDueDate(updatedTask.getDueDate());
-        newUpdatedTask.setCompleted(updatedTask.isCompleted());
+        Todo newUpdatedTask = todoRepo.findById(Integer.parseInt(id))
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
 
-        todoRepo.save(newUpdatedTask);
+        String currentUsername = userService.getCurrentUserDetails().getUsername();
 
-        return newUpdatedTask;
+        if(!Objects.equals(newUpdatedTask.getUser().getUsername(), currentUsername)){
+            throw new UnauthorisedActionException("you are not authorised to update this task");
+        }
+
+        for (Field field : Todo.class.getDeclaredFields()) {
+            field.setAccessible(true);
+            try {
+                Object value = field.get(updatedTask);
+                if (value != null) {
+                    field.set(newUpdatedTask, value);
+                }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Error updating field: " + field.getName(), e);
+            }
+        }
+
+        return todoRepo.save(newUpdatedTask);
+    }
+
+    public TodoRequest getTodoById(Integer id) {
+        String username = userService.getCurrentUserDetails().getUsername();
+        Todo todo = todoRepo.getTodoByIdAndUsername(id, username).orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
+        return todoMapper.toTodoResponse(todo);
     }
 }

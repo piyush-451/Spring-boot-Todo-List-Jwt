@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface RoleRepo extends JpaRepository<Role,Integer> {
     boolean existsByName(String roleAdmin);
 
+
     @Query("SELECT r FROM Role r WHERE r.name = :roleName")
-    Role findByRolename(@Param("roleName") String roleName);
+    Optional<Role> findByRolename(@Param("roleName") String roleName);
 }

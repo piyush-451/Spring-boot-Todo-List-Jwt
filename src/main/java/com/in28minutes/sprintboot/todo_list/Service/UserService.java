@@ -28,12 +28,5 @@ public class UserService {
         return (UserDetails) authentication.getPrincipal();
     }
 
-    public String deleteSingleUser(String id) {
-        Integer userId= Integer.parseInt(id);
-        User toBeDeletedUser = userRepo.findById(userId)
-                .orElseThrow(() -> new RuntimeException("user not present"));
 
-        userRepo.delete(toBeDeletedUser);
-        return toBeDeletedUser.getUsername();
-    }
 }

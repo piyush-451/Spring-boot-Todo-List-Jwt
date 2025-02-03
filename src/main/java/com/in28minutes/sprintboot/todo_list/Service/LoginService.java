@@ -24,7 +24,6 @@ public class LoginService {
         Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(),user.getPassword()));
         try{
             if(authentication.isAuthenticated()){
-                System.out.println("authenticated");
                 return Optional.ofNullable(jwtService.genarateToken(user.getUsername()));
             }
         }

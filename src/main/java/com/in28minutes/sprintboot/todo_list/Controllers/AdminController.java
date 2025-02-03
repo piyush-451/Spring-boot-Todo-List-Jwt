@@ -32,12 +32,12 @@ public class AdminController {
     @Autowired
     private TodoService todoService;
 
-    @PutMapping("/assign-admin-role/{id}")
-    ResponseEntity<String> assignAdmin(@PathVariable String id) {
+    @PatchMapping("/assign-roles/{id}")
+    ResponseEntity<String> assignAdmin(@PathVariable String id,@RequestBody List<String> roles){
         Collection<? extends GrantedAuthority> authorities = userService.getCurrentUserDetails().getAuthorities();
         System.out.println(authorities);
-        User newAdminUser = adminService.assignAdminRole(id);
-        String message = String.format("Role assigned to user: %s", newAdminUser);
+        User updatedUser = adminService.assignRoles(id,roles);
+        String message = String.format("Role assigned to user: %s", updatedUser.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
@@ -53,6 +53,31 @@ public class AdminController {
 
     @DeleteMapping("/delete-user/{id}")
     public ResponseEntity<String> deleteSingleUser(@PathVariable String id){
-        return ResponseEntity.ok("user deleted : " + userService.deleteSingleUser(id));
+        return ResponseEntity.ok("user deleted : " + adminService.deleteSingleUser(id));
+    }
+
+    @PostMapping("/add-roles")
+    public ResponseEntity<?> addRole(@RequestBody List<String> roles){
+        return ResponseEntity.ok().body("roles added : " + String.join(", " , roles) + adminService.addRoles(roles));
+    }
+
+    @GetMapping("/roles")
+    public ResponseEntity<List<Role>> getAllRoles(){
+        return ResponseEntity.ok().body(adminService.getAllRoles());
+    }
+
+    @DeleteMapping("/delete-role/{id}")
+    public ResponseEntity<String> deleteRole(@PathVariable String id){
+        return ResponseEntity.ok().body(adminService.deleteRole(id));
+    }
+
+    @GetMapping("/users-by-role/{id}")
+    public ResponseEntity<?> getUsersByRole(@PathVariable String id){
+        return ResponseEntity.ok().body(adminService.getUsersByRole(id));
+    }
+
+    @PatchMapping("revoke-roles/{id}")
+    public ResponseEntity<?> revokeRoles(@PathVariable String id, @RequestBody List<String> roles){
+        return ResponseEntity.ok().body(adminService.revokeRoles(id,roles));
     }
 }
